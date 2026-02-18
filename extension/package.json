@@ -1,0 +1,20 @@
+{
+  "name": "tigermcp-ext",
+  "version": "0.1.0",
+  "description": "toggle developer mode for MCP connectors",
+  "homepage": "https://github.com/BlazerYoo/tigermcp#readme",
+  "bugs": {
+    "url": "https://github.com/BlazerYoo/tigermcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BlazerYoo/tigermcp.git"
+  },
+  "license": "AGPL-3.0-only",
+  "author": "BlazerYoo",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
