@@ -15,9 +15,19 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "postinstall": "wxt prepare",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
     "wxt": "^0.20.17"
+  },
+  "dependencies": {
+    "@webext-core/messaging": "^2.3.0"
   }
 }
