@@ -1,4 +1,5 @@
 import { defineContentScript } from 'wxt/utils/define-content-script';
+import { injectScript } from 'wxt/utils/inject-script';
 import { browser } from 'wxt/browser';
 import { sendMessage } from '../utils/messaging';
 
@@ -8,67 +9,39 @@ export default defineContentScript({
     async main() {
         console.log('Content script loaded');
 
+
         setTimeout(async () => {
-            console.log('Toggling dev mode...');
-            console.log('Sending auth value request from background script...');
-
-            const auth_value = await sendMessage('msg', {
-                senderId: browser.runtime.id,
-                type: 'auth_value_request',
-                payload: ''
-            });
-
-            if (auth_value) {
-                // toggle_dev_mode(auth_value);
-
-                console.log('Auth value received from background script:', auth_value);
-            } else {
-                console.error('Failed to retrieve authorization value from background script');
-            }
-        }, 5000);
-
-
-        const check_dev_mode_status = async (auth_value: string) => {
-            const dev_mode_confirm_url = 'https://chatgpt.com/backend-api/settings/user';
-
-            const settings = await fetch(dev_mode_confirm_url, {
-                method: 'GET',
-                headers: {
-                    authorization: auth_value
-                }
-            });
-
-
-            // if (response?.settings?.developer_mode) {
-            //     console.log('Dev mode enabled');
-            // } else {
-            //     console.error('Failed to enable dev mode: Unexpected response structure', response);
-            //     return 'failed';
-            // }
-
-        };
-
-
-        const toggle_dev_mode = async (auth_value: string) => {
             try {
-                // https://chatgpt.com/#settings/Connectors/Advanced
-                const dev_mode_url = 'https://chatgpt.com/backend-api/settings/account_user_setting';
-                const data = { feature: 'developer_mode', value: true };
+                console.log('Toggling dev mode...');
+                console.log('Sending auth token request from background script...');
 
-
-                const response = await fetch(dev_mode_url, {
-                    method: 'PATCH',
-                    headers: {
-                        authorization: auth_value
-                    },
-                    body: JSON.stringify(data)
+                const auth_token = await sendMessage('msg', {
+                    senderId: browser.runtime.id,
+                    type: 'auth_token_request',
+                    payload: ''
                 });
 
-                console.log(response);
-                return 'ok';
+                if (!auth_token) {
+                    throw new Error('auth token not received from background script');
+                }
+
+                console.log('Auth token received from background script:', auth_token);
+
+                console.log('Injecting dev mode toggle script...');
+
+                await injectScript('/toggle_dev.js', {
+                    keepInDom: true,
+                    modifyScript: (script) => {
+                        script.dataset['auth_token'] = auth_token;
+                    }
+                });
+
+                console.log('Dev mode toggle script injected successfully');
             } catch (error) {
-                return 'failed';
+                console.error('Error toggling dev mode:', error);
+                return;
             }
-        };
+
+        }, 3000);
     }
 });

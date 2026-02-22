@@ -11,26 +11,31 @@ export default defineBackground(() => {
     const backend_api_url = 'https://chatgpt.com/backend-api/';
 
 
+    // intercept backend API requests
     browser.webRequest.onBeforeSendHeaders.addListener(
         (details): undefined => {
             (async () => {
                 if (details.url.includes(backend_api_url)) {
+
+                    // find auth token
                     console.log('Request to backend API:', details.url);
                     const headers = details.requestHeaders || [];
                     const authorization = headers.find(obj =>
                         obj.name.toLowerCase().includes('authorization')
                     );
 
+                    // store auth token
                     if (authorization) {
-                        console.log('Authorization header found:', authorization);
+                        console.log('Auth header found:', authorization);
 
-                        const auth_value_stored = await storage.getItem('local:auth_value_stored');
+                        const auth_token = await storage.getItem('local:auth_token');
 
-                        if (!auth_value_stored) {
-                            await storage.setItem('local:auth_value_stored', authorization?.value);
-                            console.log('Authorization value stored successfully');
+                        if (auth_token !== authorization?.value) {
+                            console.log('Auth token outdated or not stored');
+                            await storage.setItem('local:auth_token', authorization?.value);
+                            console.log('Auth token stored/updated successfully');
                         } else {
-                            console.log('Authorization value already stored');
+                            console.log('Latest auth token already stored');
                         }
                     }
                 }
@@ -41,31 +46,34 @@ export default defineBackground(() => {
     );
 
 
+    // handle messages from content script
     onMessage('msg', async (message) => {
         try {
+
+            // only process messages from same extension
             if (message.data.senderId !== browser.runtime.id) {
                 throw new Error('unknown sender ID');
             }
 
-            if (message.data.type === 'auth_value_request') {
-                console.log('Received auth value request from content script');
+            // handle auth token request
+            if (message.data.type === 'auth_token_request') {
+                console.log('Received auth token request from content script');
 
-                const auth_value = await storage.getItem('local:auth_value_stored');
+                const auth_token = await storage.getItem('local:auth_token');
 
-                if (!auth_value) {
-                    console.error('Authorization value not found in storage');
-                    return '';
+                if (!auth_token) {
+                    throw new Error('auth token not found in storage');
                 }
 
-                return auth_value;
+                console.log('Sending auth token to content script:', auth_token);
+
+                return auth_token;
+            } else {
+                throw new Error('unknown message type');
             }
-
-            return '';
-
         } catch (error) {
-            console.error(`Error handling message: ${error}`);
+            console.error('Error handling message:', error);
             return '';
         }
-
     });
 });

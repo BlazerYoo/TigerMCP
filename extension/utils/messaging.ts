@@ -3,7 +3,7 @@ import { defineExtensionMessaging } from '@webext-core/messaging';
 
 interface Message {
     senderId: string;
-    type: 'auth_value_request';
+    type: 'auth_token_request';
     payload: string;
 }
 
