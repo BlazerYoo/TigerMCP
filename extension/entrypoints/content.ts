@@ -1,5 +1,7 @@
 import { defineContentScript } from 'wxt/utils/define-content-script';
 import { browser } from 'wxt/browser';
+import { storage } from '#imports';
+import { waitFor, listenForSummon } from '../utils/load';
 import { sendMessage } from '../utils/messaging';
 
 
@@ -73,7 +75,13 @@ export default defineContentScript({
         };
 
 
-        setTimeout(async () => {
+        const tigger_summoned = await storage.getItem('local:tigger_summoned');
+        console.log('Tigger summoned status:', tigger_summoned);
+
+
+        // wait for tigger's summoning
+        await waitFor('#prompt-textarea');
+        listenForSummon('#prompt-textarea', '@tigger ', async () => {
             try {
                 console.log('Toggling dev mode...');
                 console.log('Sending auth token request from background script...');
@@ -91,11 +99,14 @@ export default defineContentScript({
                 console.log('Auth token received from background script:', auth_token);
 
                 await toggle_dev_mode(auth_token);
+
+                await storage.setItem('local:tigger_summoned', !tigger_summoned);
+
+                window.location.reload();
             } catch (error) {
                 console.error('Error toggling dev mode:', error);
                 return;
             }
-
-        }, 3000);
+        });
     }
 });
